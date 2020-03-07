@@ -152,21 +152,17 @@ if(!Detector.webgl){
     Detector.addGetWebGLMessage();
     } else {
         var dataSrc = ["confirmed", "deaths", "recovered"];
-        var dataSrcURI = ["./data/time_series_19-covid-Confirmed.csv", "./data/time_series_19-covid-Deaths.csv", "recovered"];
-        var url = "./data/time_series_19-covid-Confirmed.csv";
+        var dataSrcURI = ["COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv", "COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv", "COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"];
+        var url = dataSrcURI[0];
         var container = document.getElementById('container');
         var globe = new DAT.Globe(container);
         var request;
         let scale = 1/67466*1500;
 
-
-
         var infoListMax = document.getElementById("maxDataP");
         var infoListSum = document.getElementById("allDataP");
         var maxData = 0;
         var sumOfAll = 0;
-
-        TWEEN.start();
 
         request = new XMLHttpRequest();
         request.open("GET", url, false);
@@ -188,7 +184,7 @@ if(!Detector.webgl){
                         //     data.push(long);
                         //     data.push(mag*scale);
                         // }
-                        var mag = Number(line.split(",")[46]);
+                        var mag = Number(lineArr[lineArr.length-1]);
                         if(maxData < mag) maxData = mag;
                         sumOfAll += mag;
 

@@ -1,0 +1,287 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <title>WebGL Globe</title>
+    <meta charset="utf-8">
+    <style type="text/css">
+      html {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000000 url(./loading.gif) center center no-repeat;
+        color: #ffffff;
+        font-family: sans-serif;
+        font-size: 13px;
+        line-height: 20px;
+        height: 100%;
+      }
+
+      #info {
+
+        font-size: 11px;
+        position: absolute;
+        bottom: 5px;
+        background-color: rgba(0,0,0,0.8);
+        border-radius: 3px;
+        right: 10px;
+        padding: 10px;
+
+      }
+
+      #currentInfo {
+        width: 270px;
+        position: absolute;
+        left: 20px;
+        top: 63px;
+
+        background-color: rgba(0,0,0,0.2);
+
+        border-top: 1px solid rgba(255,255,255,0.4);
+        padding: 10px;
+      }
+
+      #currentInfoRight {
+        width: 270px;
+        position: absolute;
+        right: 20px;
+        top: 63px;
+
+        background-color: rgba(0,0,0,0.2);
+
+        border-top: 1px solid rgba(255,255,255,0.4);
+        padding: 10px;
+        font: 16px Georgia;
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      a {
+        color: #aaa;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .bull {
+        padding: 0 5px;
+        color: #555;
+      }
+
+      #title {
+        position: absolute;
+        top: 20px;
+        width: 270px;
+        left: 20px;
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 3px;
+        font: 20px Georgia;
+        padding: 10px;
+      }
+
+      .dataSrc {
+        font: 16px Georgia;
+        line-height: 26px;
+        height: 30px;
+        text-align: center;
+        float: left;
+        width: 90px;
+        color: rgba(255, 255, 255, 0.4);
+
+        cursor: pointer;
+        -webkit-transition: all 0.1s ease-out;
+      }
+
+      .dataSrc:hover, .dataSrc.active {
+        font-size: 18px;
+        color: #fff;
+      }
+
+      #ce span {
+        display: none;
+      }
+
+      #ce {
+        width: 107px;
+        height: 55px;
+        display: block;
+        position: absolute;
+        bottom: 15px;
+        left: 20px;
+        background: url(./ce.png);
+      }
+
+
+    </style>
+  </head>
+  <body>
+
+  <div id="container"></div>
+
+  <div id="info">
+    <strong><a href="http://www.chromeexperiments.com/globe">WebGL Globe</a></strong> <span class="bull">&bull;</span> Created by Alexander Nieddu <span class="bull">&bull;</span> Data acquired from <a href="https://github.com/CSSEGISandData">CSSE at Johns Hopkins University</a>
+  </div>
+
+  <div id="currentInfo">
+    <span id="confirmed" class="dataSrc">Confirmed</span>
+    <span id="deaths" class="dataSrc">Deaths</span>
+    <span id="recovered" class="dataSrc">Recovered</span>
+  </div>
+
+  <div id="currentInfoRight">
+    <p id="maxDataP" class=""></p>
+    <p id="allDataP" class=""></p>
+  </div>
+
+  <div id="title">
+    COVID-19 Globe
+  </div>
+
+  <a id="ce" href="http://www.chromeexperiments.com/globe">
+    <span>This is a Chrome Experiment</span>
+</a>
+
+<script type="text/javascript" src="./third-party/Detector.js"></script>
+<script type="text/javascript" src="./third-party/three.min.js"></script>
+<script type="text/javascript" src="./third-party/Tween.js"></script>
+<script type="text/javascript" src="./globe.js"></script>
+<script type="text/javascript">
+
+if(!Detector.webgl){
+    Detector.addGetWebGLMessage();
+    } else {
+        var dataSrc = ["confirmed", "deaths", "recovered"];
+        var dataSrcURI = ["./data/time_series_19-covid-Confirmed.csv", "./data/time_series_19-covid-Deaths.csv", "recovered"];
+        var url = "./data/time_series_19-covid-Confirmed.csv";
+        var container = document.getElementById('container');
+        var globe = new DAT.Globe(container);
+        var request;
+        let scale = 1/67466*1500;
+
+
+
+        var infoListMax = document.getElementById("maxDataP");
+        var infoListSum = document.getElementById("allDataP");
+        var maxData = 0;
+        var sumOfAll = 0;
+
+        TWEEN.start();
+
+        request = new XMLHttpRequest();
+        request.open("GET", url, false);
+        request.onreadystatechange = function(e) {
+            if (request.readyState === 4) {
+                var data = [];
+                if (request.status === 200) {
+                    var lines = request.responseText.split("\n");
+                    for (var i = 1; i < lines.length; i++) {
+                        var obj = {};
+                        var line = lines[i];
+
+                        var lineArr = line.split(",");
+                        var lat = Number(lineArr[2]);
+                        var long = Number(lineArr[3]);
+                        // for(var j = 0; j < lineArr.length-4-1; j++) {
+                        //     var mag = lineArr[4+j];
+                        //     data.push(lat);
+                        //     data.push(long);
+                        //     data.push(mag*scale);
+                        // }
+                        var mag = Number(line.split(",")[46]);
+                        if(maxData < mag) maxData = mag;
+                        sumOfAll += mag;
+
+                    console.log(maxData + " " + mag);
+
+                        data.push(lat);
+                        data.push(long);
+                        data.push(mag*scale);
+                    }
+                    globe.addData(data, {format: 'magnitude', name: "Infected", animated: true});
+                    // Retrived data from csv file content
+                    console.log(data);
+                    globe.createPoints();
+                    globe.animate();
+                    document.body.style.backgroundImage = 'none';
+
+                    infoListMax.innerHTML = "Maximum per Location: " + maxData;
+                    infoListSum.innerHTML = "Sum of all: " + sumOfAll;
+                }
+            }
+        };
+        request.send(null);
+
+        var setSrc = function(t) {
+            return function() {
+                var y = document.getElementById(dataSrc[t]);
+                if (y.getAttribute('class') === 'dataSrc active') {
+                    return;
+                }
+                var yy = document.getElementsByClassName('dataSrc');
+                for(i=0; i < yy.length; i++) {
+                    yy[i].setAttribute('class','dataSrc');
+                }
+                y.setAttribute('class', 'dataSrc active');
+                url = dataSrcURI[t];
+                loadGlobe();
+            };
+        };
+
+        for(var i = 0; i<dataSrc.length; i++) {
+            var y = document.getElementById(dataSrc[i]);
+            y.addEventListener('mouseover', setSrc(i), false);
+        }
+
+        var loadGlobe = function() {
+            request = new XMLHttpRequest();
+            request.open("GET", url, false);
+            request.onreadystatechange = function(e) {
+                if (request.readyState === 4) {
+                    var data = [];
+                    if (request.status === 200) {
+                        var lines = request.responseText.split("\n");
+                        for (var i = 1; i < lines.length; i++) {
+                            var obj = {};
+                            var line = lines[i];
+
+                            var lineArr = line.split(",");
+                            var lat = Number(lineArr[2]);
+                            var long = Number(lineArr[3]);
+                            // for(var j = 0; j < lineArr.length-4-1; j++) {
+                            //     var mag = lineArr[4+j];
+                            //     data.push(lat);
+                            //     data.push(long);
+                            //     data.push(mag*scale);
+                            // }
+                            var mag = Number(line.split(",")[46]);
+                            if(maxData < mag) maxData = mag;
+                            sumOfAll += mag;
+
+                        console.log(maxData + " " + mag);
+
+                            data.push(lat);
+                            data.push(long);
+                            data.push(mag*scale);
+                        }
+                        globe.addData(data, {format: 'magnitude', name: "Infected", animated: true});
+                        // Retrived data from csv file content
+                        console.log(data);
+                        globe.createPoints();
+                        globe.animate();
+                        document.body.style.backgroundImage = 'none';
+
+                        infoListMax.innerHTML = "Maximum per Location: " + maxData;
+                        infoListSum.innerHTML = "Sum of all: " + sumOfAll;
+                    }
+                }
+            };
+            request.send(null);
+        }
+    }
+
+  </script>
+
+  </body>
+
+</html>

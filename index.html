@@ -44,18 +44,23 @@
 
       #currentInfoRight {
         width: 270px;
-        position: absolute;
-        right: 20px;
-        top: 63px;
+        position: relative;
+        /* right: 20px;
+        top: 63px; */
 
         background-color: rgba(0,0,0,0.2);
 
-        border-top: 1px solid rgba(255,255,255,0.4);
-        padding: 10px;
+        /* border-top: 1px solid rgba(255,255,255,0.4); */
+        padding: 10px 0;
         font: 16px Georgia;
         color: rgba(255, 255, 255, 0.4);
       }
 
+      #currentInfo p {
+        position: relative;
+        font-family: Georgia;
+        top: 20px;
+      }
       a {
         color: #aaa;
         text-decoration: none;
@@ -120,19 +125,20 @@
   <div id="container"></div>
 
   <div id="info">
-    <strong><a href="http://www.chromeexperiments.com/globe">WebGL Globe</a></strong> <span class="bull">&bull;</span> Created by Alexander Nieddu <span class="bull">&bull;</span> Data acquired from <a href="https://github.com/CSSEGISandData">CSSE at Johns Hopkins University</a>
+    <strong><a href="http://www.chromeexperiments.com/globe">WebGL Globe</a></strong> <span class="bull">&bull;</span> Created by <a href="https://github.com/alexnieddu">Alexander Nieddu</a> <span class="bull">&bull;</span> Data from <a href="https://github.com/CSSEGISandData">CSSE at Johns Hopkins University</a>
   </div>
 
   <div id="currentInfo">
-    <span id="confirmed" class="dataSrc">Confirmed</span>
-    <span id="deaths" class="dataSrc">Deaths</span>
-    <span id="recovered" class="dataSrc">Recovered</span>
+    <span id="Confirmed" class="dataSrc">Confirmed</span>
+    <span id="Deaths" class="dataSrc">Deaths</span>
+    <span id="Recovered" class="dataSrc">Recovered</span>
+    <p>The 2019–20 coronavirus outbreak is an ongoing global outbreak of coronavirus disease 2019 that has been declared a Public Health Emergency of International Concern. It is caused by the SARS-CoV-2 coronavirus, first identified in Wuhan, Hubei, China. Read more on <a href="https://en.wikipedia.org/wiki/2019%E2%80%9320_coronavirus_outbreak" target="_blank">Wikipedia</a>.</p>
+    <div id="currentInfoRight">
+      <p id="maxDataP" class=""></p>
+      <p id="allDataP" class=""></p>
+    </div>
   </div>
 
-  <div id="currentInfoRight">
-    <p id="maxDataP" class=""></p>
-    <p id="allDataP" class=""></p>
-  </div>
 
   <div id="title">
     COVID-19 Globe
@@ -151,9 +157,11 @@
 if(!Detector.webgl){
     Detector.addGetWebGLMessage();
     } else {
-        var dataSrc = ["confirmed", "deaths", "recovered"];
+        var dataSrc = ["Confirmed", "Deaths", "Recovered"];
         var dataSrcURI = ["COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv", "COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv", "COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"];
-        var url = dataSrcURI[0];
+        var srcID = 0;
+        var url = dataSrcURI[srcID];
+        var data = [];
         var container = document.getElementById('container');
         var globe = new DAT.Globe(container);
         var request;
@@ -168,11 +176,9 @@ if(!Detector.webgl){
         request.open("GET", url, false);
         request.onreadystatechange = function(e) {
             if (request.readyState === 4) {
-                var data = [];
                 if (request.status === 200) {
                     var lines = request.responseText.split("\n");
                     for (var i = 1; i < lines.length; i++) {
-                        var obj = {};
                         var line = lines[i];
 
                         var lineArr = line.split(",");
@@ -188,21 +194,16 @@ if(!Detector.webgl){
                         if(maxData < mag) maxData = mag;
                         sumOfAll += mag;
 
-                    console.log(maxData + " " + mag);
-
                         data.push(lat);
                         data.push(long);
                         data.push(mag*scale);
                     }
-                    globe.addData(data, {format: 'magnitude', name: "Infected", animated: true});
+                    globe.addData(data, {format: 'magnitude', name: dataSrc[srcID], animated: true});
                     // Retrived data from csv file content
-                    console.log(data);
+                    // console.log(data);
                     globe.createPoints();
                     globe.animate();
                     document.body.style.backgroundImage = 'none';
-
-                    infoListMax.innerHTML = "Maximum per Location: " + maxData;
-                    infoListSum.innerHTML = "Sum of all: " + sumOfAll;
                 }
             }
         };
@@ -210,6 +211,7 @@ if(!Detector.webgl){
 
         var setSrc = function(t) {
             return function() {
+                srcID = t;
                 var y = document.getElementById(dataSrc[t]);
                 if (y.getAttribute('class') === 'dataSrc active') {
                     return;
@@ -219,8 +221,9 @@ if(!Detector.webgl){
                     yy[i].setAttribute('class','dataSrc');
                 }
                 y.setAttribute('class', 'dataSrc active');
-                url = dataSrcURI[t];
-                loadGlobe();
+                url = dataSrcURI[srcID];
+                loadData();
+                loadStats();
             };
         };
 
@@ -229,50 +232,45 @@ if(!Detector.webgl){
             y.addEventListener('mouseover', setSrc(i), false);
         }
 
-        var loadGlobe = function() {
+        var loadStats = function() {
+            infoListMax.innerHTML = dataSrc[srcID] + " in Hubei: " + maxData + " (" + Math.floor(maxData/sumOfAll*100) + "%)";
+            infoListSum.innerHTML = "Worldwide " + dataSrc[srcID] + ": " + sumOfAll;
+        }
+
+        var loadData = function() {
+            data = [];
+            maxData = 0;
+            sumOfAll = 0;
             request = new XMLHttpRequest();
             request.open("GET", url, false);
             request.onreadystatechange = function(e) {
                 if (request.readyState === 4) {
-                    var data = [];
                     if (request.status === 200) {
                         var lines = request.responseText.split("\n");
                         for (var i = 1; i < lines.length; i++) {
-                            var obj = {};
                             var line = lines[i];
 
                             var lineArr = line.split(",");
                             var lat = Number(lineArr[2]);
                             var long = Number(lineArr[3]);
-                            // for(var j = 0; j < lineArr.length-4-1; j++) {
-                            //     var mag = lineArr[4+j];
-                            //     data.push(lat);
-                            //     data.push(long);
-                            //     data.push(mag*scale);
-                            // }
-                            var mag = Number(line.split(",")[46]);
+                            var mag = Number(lineArr[lineArr.length-1]);
                             if(maxData < mag) maxData = mag;
                             sumOfAll += mag;
-
-                        console.log(maxData + " " + mag);
 
                             data.push(lat);
                             data.push(long);
                             data.push(mag*scale);
                         }
-                        globe.addData(data, {format: 'magnitude', name: "Infected", animated: true});
                         // Retrived data from csv file content
-                        console.log(data);
+                        // console.log(data);
+                        globe.addData(data, {format: 'magnitude', name: dataSrc[srcID], animated: true});
                         globe.createPoints();
                         globe.animate();
                         document.body.style.backgroundImage = 'none';
-
-                        infoListMax.innerHTML = "Maximum per Location: " + maxData;
-                        infoListSum.innerHTML = "Sum of all: " + sumOfAll;
                     }
                 }
             };
-            request.send(null);
+            request.send(00);
         }
     }
 

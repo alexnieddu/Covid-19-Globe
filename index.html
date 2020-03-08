@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
-    <title>WebGL Globe</title>
+    <title>COVID-19 Globe</title>
     <meta charset="utf-8">
     <style type="text/css">
       html {
@@ -153,6 +153,7 @@
 if(!Detector.webgl){
     Detector.addGetWebGLMessage();
     } else {
+        var date;
         var dataSrc = ["Confirmed", "Deaths", "Recovered"];
         var dataSrcURI = ["COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv", "COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv", "COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"];
         var srcID = 0;

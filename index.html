@@ -53,7 +53,7 @@
         /* border-top: 1px solid rgba(255,255,255,0.4); */
         padding: 10px 0;
         font: 16px Georgia;
-        color: rgba(255, 255, 255, 0.4);
+        color: white;
       }
 
       #currentInfo p {
@@ -201,6 +201,8 @@ if(!Detector.webgl){
                     globe.createPoints();
                     globe.animate();
                     document.body.style.backgroundImage = 'none';
+                    infoListMax.innerHTML = dataSrc[srcID] + " in Hubei: " + maxData + " (" + Math.floor(maxData/sumOfAll*100) + "%)";
+            infoListSum.innerHTML = "Worldwide " + dataSrc[srcID] + ": " + sumOfAll;
                 }
             }
         };
@@ -235,6 +237,7 @@ if(!Detector.webgl){
         }
 
         var loadData = function() {
+            globe = new DAT.Globe(container);
             data = [];
             maxData = 0;
             sumOfAll = 0;
